@@ -7,5 +7,5 @@ public interface Diff {
 
     void diff() throws InterruptedException;
 
-
+    
 }

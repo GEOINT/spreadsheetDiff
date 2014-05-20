@@ -1,9 +1,11 @@
 package gov.ic.geoint.spreadsheet;
 
+import java.io.IOException;
+
 /**
  *
  */
-public interface IWorkbook extends Hashable {
+public interface IWorkbook extends Hashable, Iterable<ISheet> {
 
     /**
      *
@@ -13,17 +15,25 @@ public interface IWorkbook extends Hashable {
 
     /**
      *
-     * @param sheetNum
+     * @param sheetName
      * @return the sheet or null
      */
-    ISheet getSheet(int sheetNum);
+    ISheet getSheet(String sheetName);
+
+    /**
+     * Return all of the current sheet names.
+     *
+     * @return
+     */
+    String[] getSheetNames();
 
     /**
      * Adds the row to the workbook
-     * 
-     * @param row 
+     *
+     * @param row
      */
     void addRow(IRow row);
 
-    public ISheet[] getSheets();
+    public void save() throws IOException;
+
 }

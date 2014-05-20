@@ -1,8 +1,12 @@
 package gov.ic.geoint.spreadsheet.diff.swing;
 
+import gov.ic.geoint.spreadsheet.diff.AppendDiffToWorkbookListener;
+import gov.ic.geoint.spreadsheet.diff.DiffListener;
+import gov.ic.geoint.spreadsheet.diff.RowChangeDiff;
+import gov.ic.geoint.spreadsheet.excel.ExcelWorkbook;
 import java.awt.Desktop;
 import java.io.File;
-import java.io.IOException;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -16,6 +20,7 @@ public class CompareFrame extends javax.swing.JFrame {
 
     private File baseFile;
     private File compareFile;
+    private final static Logger logger = Logger.getLogger(CompareFrame.class.getName());
 
     /**
      * Creates new form CompareFrame
@@ -166,24 +171,32 @@ public class CompareFrame extends javax.swing.JFrame {
         if (baseFile == null) {
             JOptionPane.showMessageDialog(this, "Base file has not been set.");
         }
-        
-        
+
         compareButton.setEnabled(false);
-        
-        File tmpFile = doCompare();
+
         try {
+            File tmpFile = doCompare();
             Desktop.getDesktop().open(tmpFile);
-        } catch (IOException ex) {
-           JOptionPane.showMessageDialog(this, "Unable to open diff file!");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Unable to open diff file!");
+            logger.log(Level.SEVERE, "Problems comparing file", ex);
         }
         compareButton.setEnabled(true);
-        
+
     }//GEN-LAST:event_compareButtonActionPerformed
 
-    private File doCompare () {
-        
+    private File doCompare() throws InterruptedException {
+        //todo make diff type configurable
+        //todo make file type configurable
+        RowChangeDiff diff = new RowChangeDiff(new ExcelWorkbook(baseFile),
+                new ExcelWorkbook(compareFile));
+        File tmpFile = new File(System.getProperty("java.io.tmpdir") + "/diff_" + UUID.randomUUID().toString());
+        DiffListener output = new AppendDiffToWorkbookListener(new ExcelWorkbook(tmpFile));
+        diff.addListener(output);
+        diff.diff();
+        return tmpFile;
     }
-    
+
     /**
      * @param args the command line arguments
      */

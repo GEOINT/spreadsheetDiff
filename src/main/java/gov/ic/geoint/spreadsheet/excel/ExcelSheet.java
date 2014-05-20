@@ -2,8 +2,12 @@ package gov.ic.geoint.spreadsheet.excel;
 
 import gov.ic.geoint.spreadsheet.IRow;
 import gov.ic.geoint.spreadsheet.ISheet;
+import gov.ic.geoint.spreadsheet.util.HashUtil;
+import gov.ic.geoint.spreadsheet.util.IteratorWrapper;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
 /**
@@ -29,18 +33,42 @@ public class ExcelSheet implements ISheet {
     }
 
     @Override
-    public IRow[] getRows() {
-        
-    }
-
-    @Override
     public IRow getRow(int rowNum) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return ExcelRow.create(sheet.getRow(rowNum));
     }
 
     @Override
     public byte[] getHash() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return HashUtil.hash(this);
     }
 
+    @Override
+    public Iterator<IRow> iterator() {
+        return new ExcelRowIterator(sheet.iterator());
+    }
+
+    @Override
+    public String getName() {
+        return sheet.getSheetName();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Sheet '").append(sheet.getSheetName()).append("'");
+        return sb.toString();
+    }
+
+    private static class ExcelRowIterator extends IteratorWrapper<IRow, Row> {
+
+        public ExcelRowIterator(Iterator<Row> iterator) {
+            super(iterator);
+        }
+
+        @Override
+        protected IRow convert(Row from) {
+            return ExcelRow.create(from);
+        }
+
+    }
 }

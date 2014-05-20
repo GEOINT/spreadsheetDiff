@@ -22,7 +22,7 @@ public class HashUtil {
 
     public static byte[] hash(IRow r) {
         MessageDigest md = getDigest();
-        for (ICell c : r.getCells()) {
+        for (ICell c : r) {
             md.update(c.getValue().getBytes());
             md.update(INPUT_SEPARATOR); //trailing separator...it doesn't matter
         }
@@ -31,7 +31,7 @@ public class HashUtil {
 
     public static byte[] hash(ISheet s) {
         MessageDigest md = getDigest();
-        for (IRow r : s.getRows()) {
+        for (IRow r : s) {
             md.update(r.getHash());
             md.update(INPUT_SEPARATOR); //trailing separator...it doesn't matter
         }
@@ -40,7 +40,7 @@ public class HashUtil {
 
     public static byte[] hash(IWorkbook w) {
         MessageDigest md = getDigest();
-        for (ISheet s : w.getSheets()) {
+        for (ISheet s : w) {
             md.update(s.getHash());
             md.update(INPUT_SEPARATOR);
         }

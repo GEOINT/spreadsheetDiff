@@ -9,6 +9,8 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Compares each sheet within the provided workbooks, row by row, to determine
@@ -18,8 +20,9 @@ public class RowChangeDiff extends ObservableDiff {
 
     private final IWorkbook base;
     private final IWorkbook change;
+    private final static Logger logger = Logger.getLogger(RowChangeDiff.class.getName());
 
-    RowChangeDiff(IWorkbook base, IWorkbook change) {
+    public RowChangeDiff(IWorkbook base, IWorkbook change) {
         this.base = base;
         this.change = change;
     }
@@ -33,11 +36,23 @@ public class RowChangeDiff extends ObservableDiff {
                 Math.min(Runtime.getRuntime().availableProcessors() * 2,
                         maxSheets));
 
-        for (int i = 0; i < maxSheets; i++) {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.log(Level.FINE, "Initialized row diff thread pool.");
+        }
+
+        //use the sheets from the change workbook to reference those from 
+        //the base -- if there are missing sheets in the change sheet, that's 
+        //ok...we don't want to display these anyway
+        for (String sheetName : change.getSheetNames()) {
             SheetRowChangeTask task
-                    = new SheetRowChangeTask(
-                            base.getSheet(i),
-                            change.getSheet(i));
+                    = new SheetRowChangeTask(base.getSheet(sheetName),
+                            change.getSheet(sheetName));
+
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "Submitting row diff task to compare "
+                        + "sheet name ''{0}''", sheetName);
+            }
+
             exec.submit(task);
         }
 
@@ -59,16 +74,28 @@ public class RowChangeDiff extends ObservableDiff {
         @Override
         public void run() {
 
+            if (logger.isLoggable(Level.FINE)) {
+                logger.log(Level.FINE, "Running sheet row change diff for "
+                        + "sheet {0}", baseSheet.getName());
+            }
+
             Set<byte[]> baseRowHashes = new TreeSet<>(new ByteArrayComparator());
 
             //first get row hashes for all rows in the base sheet
-            for (IRow r : baseSheet.getRows()) {
+            for (IRow r : baseSheet) {
                 baseRowHashes.add(r.getHash());
             }
 
             //see if there are rows that do not match existing hashes
-            for (IRow r : changeSheet.getRows()) {
+            for (IRow r : changeSheet) {
                 if (!baseRowHashes.contains(r.getHash())) {
+
+                    if (logger.isLoggable(Level.FINEST)) {
+                        logger.log(Level.FINEST, "Found new row ''{0}'' in "
+                                + "sheet ''{1}''",
+                                new Object[]{r.getRowNumber(), changeSheet.getName()});
+                    }
+
                     for (DiffListener l : listeners) {
                         l.newRow(r);
                     }

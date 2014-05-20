@@ -1,4 +1,3 @@
-
 package gov.ic.geoint.spreadsheet.diff;
 
 import gov.ic.geoint.spreadsheet.IRow;
@@ -8,6 +7,11 @@ import gov.ic.geoint.spreadsheet.IRow;
  */
 public interface DiffListener {
 
-    void newRow (IRow row);
+    void newRow(IRow row);
+
+    /**
+     * Called when diff is complete
+     */
+    void complete();
     //TODO add more methods for callback...this is all I needed for now
 }

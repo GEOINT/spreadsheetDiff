@@ -1,15 +1,11 @@
 package gov.ic.geoint.spreadsheet;
 
-import java.util.List;
-
 /**
  *
  */
-public interface IRow extends Hashable {
+public interface IRow extends Hashable, Iterable<ICell> {
 
     int getRowNumber();
 
-    ICell[] getCells();
-
-    public int getSheetNum();
+    public String getSheetName();
 }
