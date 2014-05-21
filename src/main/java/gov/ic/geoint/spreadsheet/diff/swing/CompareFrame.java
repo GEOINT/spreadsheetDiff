@@ -17,7 +17,7 @@ import javax.swing.JOptionPane;
  *
  */
 public class CompareFrame extends javax.swing.JFrame {
-
+    
     private File baseFile;
     private File compareFile;
     private final static Logger logger = Logger.getLogger(CompareFrame.class.getName());
@@ -133,7 +133,7 @@ public class CompareFrame extends javax.swing.JFrame {
         if (evt.getSource() == baseFileButton) {
             final JFileChooser fc = new JFileChooser();
             int returnVal = fc.showOpenDialog(this);
-
+            
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File chosenFile = fc.getSelectedFile();
                 if (!chosenFile.exists()) {
@@ -152,7 +152,7 @@ public class CompareFrame extends javax.swing.JFrame {
         if (evt.getSource() == newFileButton) {
             final JFileChooser fc = new JFileChooser((baseFile != null) ? baseFile.getParent() : "");
             int returnVal = fc.showOpenDialog(this);
-
+            
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File chosenFile = fc.getSelectedFile();
                 if (!chosenFile.exists()) {
@@ -175,9 +175,9 @@ public class CompareFrame extends javax.swing.JFrame {
         if (baseFile == null) {
             JOptionPane.showMessageDialog(this, "Base file has not been set.");
         }
-
+        
         compareButton.setEnabled(false);
-
+        
         try {
             File tmpFile = doCompare();
             Desktop.getDesktop().open(tmpFile);
@@ -188,23 +188,25 @@ public class CompareFrame extends javax.swing.JFrame {
         compareButton.setEnabled(true);
 
     }//GEN-LAST:event_compareButtonActionPerformed
-
+    
     private File doCompare() throws InterruptedException {
         //todo make diff type configurable
         //todo make file type configurable
         RowChangeDiff diff = new RowChangeDiff(new ExcelWorkbook(baseFile),
                 new ExcelWorkbook(compareFile));
-
+        
         StringBuilder fn = new StringBuilder();
         fn.append(System.getProperty("java.io.tmpdir"));
         fn.append("/diff_").append(UUID.randomUUID().toString());
         fn.append(".xls");
-
+        
         File tmpFile = new File(fn.toString());
         tmpFile.deleteOnExit();
-        DiffListener output = new AppendDiffToWorkbookListener(new ExcelWorkbook(tmpFile));
+        DiffListener output
+                = new AppendDiffToWorkbookListener(new ExcelWorkbook(tmpFile));
         diff.addListener(output);
         diff.diff();
+        diff.removeListener(output);
         return tmpFile;
     }
 

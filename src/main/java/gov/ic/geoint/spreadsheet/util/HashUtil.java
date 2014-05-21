@@ -15,25 +15,50 @@ public class HashUtil {
     private final static String DIGEST_TYPE = "MD5"; //TODO make this configurable
     private final static byte[] INPUT_SEPARATOR = "//".getBytes();
 
+    /**
+     * Returns hash bytes or null if the value is blank/null
+     *
+     * @param c
+     * @return
+     */
     public static byte[] hash(ICell c) {
+        String value = c.getValue();
+        if (value == null || value.contentEquals("")) {
+            return null;
+        }
         MessageDigest md = getDigest();
-        return md.digest(c.getValue().getBytes());
+        return md.digest(value.getBytes());
     }
 
+    /**
+     * Returns hash bytes or null if the cells of the row contains no contents
+     *
+     * @param r
+     * @return
+     */
     public static byte[] hash(IRow r) {
         MessageDigest md = getDigest();
+        boolean hasContents = false;
         for (ICell c : r) {
-            md.update(c.getValue().getBytes());
-            md.update(INPUT_SEPARATOR); //trailing separator...it doesn't matter
+            //don't bother adjusting the hash if the cell is null
+            byte[] cellDigest = hash(c);
+            if (cellDigest != null) {
+                hasContents = true;
+                md.update(cellDigest);
+                md.update(INPUT_SEPARATOR); //trailing separator...it doesn't matter
+            }
         }
-        return md.digest();
+        return (hasContents) ? md.digest() : null;
     }
 
     public static byte[] hash(ISheet s) {
         MessageDigest md = getDigest();
         for (IRow r : s) {
-            md.update(r.getHash());
-            md.update(INPUT_SEPARATOR); //trailing separator...it doesn't matter
+            byte[] rowHash = r.getHash();
+            if (rowHash != null) {
+                md.update(r.getHash());
+                md.update(INPUT_SEPARATOR); //trailing separator...it doesn't matter
+            }
         }
         return md.digest();
     }

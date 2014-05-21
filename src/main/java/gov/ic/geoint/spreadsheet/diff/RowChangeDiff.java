@@ -27,6 +27,11 @@ public class RowChangeDiff extends ObservableDiff {
         this.change = change;
     }
 
+    /**
+     * Synchronously conduct diff
+     *
+     * @throws InterruptedException
+     */
     @Override
     public void diff() throws InterruptedException {
         final int maxSheets = Math.max(base.numSheets(), change.numSheets());
@@ -83,33 +88,37 @@ public class RowChangeDiff extends ObservableDiff {
                         new Object[]{changeSheet.getName(), changeSheet.numRows()});
             }
 
-            Set<byte[]> baseRowHashes = new TreeSet<>(new ByteArrayComparator());
+            try {
+                Set<byte[]> baseRowHashes = new TreeSet<>(new ByteArrayComparator());
 
-            //first get row hashes for all rows in the base sheet
-            if (baseSheet != null) { //may be null if sheet is new
-                System.out.println("basesheet is not null");
-                for (IRow r : baseSheet) {
-                    baseRowHashes.add(r.getHash());
-                }
-            } else {
-                System.out.println("basesheet is null");
-            }
-
-            //see if there are rows that do not match existing hashes
-            for (IRow r : changeSheet) {
-                
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.log(Level.FINEST, "Found new row ''{0}'' in "
-                            + "sheet ''{1}''",
-                            new Object[]{r.getRowNumber(), changeSheet.getName()});
-                }
-                
-                if (!baseRowHashes.contains(r.getHash())) {
-
-                    for (DiffListener l : listeners) {
-                        l.newRow(r);
+                //first get row hashes for all rows in the base sheet
+                if (baseSheet != null) { //may be null if sheet is new
+                    for (IRow r : baseSheet) {
+                        byte[] rowHash = r.getHash();
+                        if (rowHash != null) {
+                            baseRowHashes.add(rowHash);
+                        }
                     }
                 }
+
+                //see if there are rows that do not match existing hashes
+                for (IRow r : changeSheet) {
+                    final byte[] rowHash = r.getHash();
+                    if (rowHash != null && !baseRowHashes.contains(rowHash)) {
+
+                        if (logger.isLoggable(Level.FINEST)) {
+                            logger.log(Level.FINEST, "Found new row ''{0}'' in "
+                                    + "sheet ''{1}''",
+                                    new Object[]{r.getRowNumber(), changeSheet.getName()});
+                        }
+                        for (DiffListener l : listeners) {
+                            l.newRow(r);
+                        }
+                    }
+                }
+            } catch (Throwable ex) {
+                logger.log(Level.SEVERE, "Problem running diff on sheet "
+                        + changeSheet.getName(), ex);
             }
         }
 

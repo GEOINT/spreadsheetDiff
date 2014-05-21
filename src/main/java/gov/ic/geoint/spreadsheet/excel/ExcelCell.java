@@ -2,9 +2,17 @@ package gov.ic.geoint.spreadsheet.excel;
 
 import gov.ic.geoint.spreadsheet.ICell;
 import gov.ic.geoint.spreadsheet.util.HashUtil;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.WeakHashMap;
+import org.apache.poi.hssf.usermodel.HSSFDateUtil;
+import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
+import static org.apache.poi.ss.usermodel.Cell.*;
+import org.apache.poi.ss.usermodel.CellValue;
 
 /**
  *
@@ -13,6 +21,8 @@ public class ExcelCell implements ICell {
 
     private static final Map<Cell, ExcelCell> cache = new WeakHashMap<>();
     private final Cell cell;
+    private HSSFFormulaEvaluator evaluator;
+    private final static String DATE_FORMAT = "dd MMM yyyy";
 
     public ExcelCell(Cell cell) {
         this.cell = cell;
@@ -45,7 +55,37 @@ public class ExcelCell implements ICell {
 
     @Override
     public String getValue() {
-        return cell.getStringCellValue();
+        switch (cell.getCellType()) {
+            case CELL_TYPE_BLANK:
+                return "";
+            case CELL_TYPE_STRING:
+                return cell.getStringCellValue();
+            case CELL_TYPE_NUMERIC:
+                if (HSSFDateUtil.isCellDateFormatted(cell)) {
+                    Date date
+                            = HSSFDateUtil.getJavaDate(cell.getNumericCellValue());
+                    DateFormat format = new SimpleDateFormat(DATE_FORMAT);
+                    return format.format(date);
+                } else {
+                    return String.valueOf(cell.getNumericCellValue());
+                }
+            case CELL_TYPE_FORMULA:
+                CellValue value= getFormulaEvaluator().evaluate(cell);
+                return value.toString();
+            case CELL_TYPE_BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case CELL_TYPE_ERROR:
+                return "!error!";
+            default:
+                return "";
+        }
+    }
+
+    private synchronized HSSFFormulaEvaluator getFormulaEvaluator() {
+        if (evaluator == null) {
+            evaluator = new HSSFFormulaEvaluator((HSSFWorkbook) cell.getSheet().getWorkbook());
+        }
+        return evaluator;
     }
 
 }

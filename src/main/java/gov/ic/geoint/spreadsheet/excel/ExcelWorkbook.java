@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -27,6 +29,7 @@ public class ExcelWorkbook implements IWorkbook {
 
     private final File file;
     private final Workbook wb;
+    private final static Logger logger = Logger.getLogger(ExcelWorkbook.class.getName());
 
     public ExcelWorkbook(File file) {
         this.file = file;
@@ -52,9 +55,28 @@ public class ExcelWorkbook implements IWorkbook {
     }
 
     @Override
-    public void addRow(IRow row) {
-        final Sheet sheet = wb.getSheet(row.getSheetName());
-        Row r = sheet.createRow(sheet.getLastRowNum() + 1);
+    public synchronized void addRow(IRow row) {
+
+        Sheet sheet = wb.getSheet(row.getSheetName());
+        if (sheet == null) {
+            sheet = wb.createSheet(row.getSheetName());
+        }
+
+        final int lastRow = sheet.getLastRowNum();
+        Row r = sheet.getRow(lastRow);
+        if (r == null) {
+            //we're here if this is the first row in the sheet
+            r = sheet.createRow(lastRow);
+        } else {
+            //we're here if the row already existed, create the next one
+            r = sheet.createRow(lastRow + 1);
+        }
+
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.log(Level.FINEST, "Adding row {0} to sheet {1}",
+                    new Object[]{r.getRowNum(), sheet.getSheetName()});
+        }
+
         for (ICell cell : row) {
             Cell c = r.createCell(cell.getColumnNum());
             c.setCellValue(cell.getValue());
