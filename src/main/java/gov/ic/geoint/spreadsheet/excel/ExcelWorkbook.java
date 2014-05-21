@@ -17,6 +17,7 @@ import java.util.Iterator;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 /**
@@ -52,7 +53,8 @@ public class ExcelWorkbook implements IWorkbook {
 
     @Override
     public void addRow(IRow row) {
-        Row r = wb.getSheet(row.getSheetName()).createRow(row.getRowNumber());
+        final Sheet sheet = wb.getSheet(row.getSheetName());
+        Row r = sheet.createRow(sheet.getLastRowNum() + 1);
         for (ICell cell : row) {
             Cell c = r.createCell(cell.getColumnNum());
             c.setCellValue(cell.getValue());
