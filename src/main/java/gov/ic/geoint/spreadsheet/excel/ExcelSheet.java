@@ -22,7 +22,19 @@ public class ExcelSheet implements ISheet {
         this.sheet = sheet;
     }
 
+    /**
+     * Create ExcelSheet if not found in cache.
+     *
+     * If sheet is null, returns null
+     *
+     * @param sheet or null
+     * @return
+     */
     public static ISheet create(Sheet sheet) {
+        if (sheet == null) {
+            return null;
+        }
+
         if (cache.containsKey(sheet)) {
             return cache.get(sheet);
         } else {
@@ -45,6 +57,11 @@ public class ExcelSheet implements ISheet {
     @Override
     public Iterator<IRow> iterator() {
         return new ExcelRowIterator(sheet.iterator());
+    }
+
+    @Override
+    public int numRows() {
+        return sheet.getPhysicalNumberOfRows();
     }
 
     @Override

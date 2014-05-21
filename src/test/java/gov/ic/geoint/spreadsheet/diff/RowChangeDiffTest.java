@@ -3,19 +3,33 @@ package gov.ic.geoint.spreadsheet.diff;
 import gov.ic.geoint.spreadsheet.IRow;
 import gov.ic.geoint.spreadsheet.excel.ExcelWorkbook;
 import java.io.File;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 
 /**
  *
  */
 public class RowChangeDiffTest {
-
+    
     private final static String XLS_BASE = "base.xls";
     private final static String XLS_APPEND_ROW = "appendedRow.xls";
     private final static String XLS_INSERTED_ROW = "insertedRow.xls";
     private final static String XLS_NEW_SHEET = "newSheet.xls";
     
+    @BeforeClass
+    public static void before() {
+        Logger gov = Logger.getLogger("gov");
+        gov.setLevel(Level.ALL);
+        Handler ch = new ConsoleHandler();
+        ch.setLevel(Level.ALL);
+        gov.addHandler(ch);
+    }
+
     /**
      * Test that a row simply appended to a sheet is detected
      *
@@ -26,13 +40,13 @@ public class RowChangeDiffTest {
         RowChangeDiff diff = new RowChangeDiff(
                 new ExcelWorkbook(getTestFile(XLS_BASE)),
                 new ExcelWorkbook(getTestFile(XLS_APPEND_ROW)));
-
+        
         RowDiffMemoryStoreListener l = new RowDiffMemoryStoreListener();
         diff.addListener(l);
         diff.diff();
-
+        
         assertEquals("invalid number of changed rows", 1, l.getRows().size());
-
+        
         IRow row = l.getRows().get(0);
         assertEquals("invalid sheet name", "Sheet1", row.getSheetName());
         assertEquals("invalid row changed", 5, row.getRowNumber()); //0-indexed
@@ -50,13 +64,13 @@ public class RowChangeDiffTest {
         RowChangeDiff diff = new RowChangeDiff(
                 new ExcelWorkbook(getTestFile(XLS_BASE)),
                 new ExcelWorkbook(getTestFile(XLS_INSERTED_ROW)));
-
+        
         RowDiffMemoryStoreListener l = new RowDiffMemoryStoreListener();
         diff.addListener(l);
         diff.diff();
-
+        
         assertEquals("invalid number of changed rows", 1, l.getRows().size());
-
+        
         IRow row = l.getRows().get(0);
         assertEquals("Invalid sheet name", "Sheet1", row.getSheetName());
         assertEquals("invalid row changed", 3, row.getRowNumber());
@@ -66,21 +80,21 @@ public class RowChangeDiffTest {
     public void testNewSheet() throws Exception {
         RowChangeDiff diff = new RowChangeDiff(
                 new ExcelWorkbook(getTestFile(XLS_BASE)),
-                new ExcelWorkbook(getTestFile(XLS_INSERTED_ROW)));
-
+                new ExcelWorkbook(getTestFile(XLS_NEW_SHEET)));
+        
         RowDiffMemoryStoreListener l = new RowDiffMemoryStoreListener();
         diff.addListener(l);
         diff.diff();
-
+        
         assertEquals("invalid number of changed rows", 1, l.getRows().size());
-
+        
         IRow row = l.getRows().get(0);
         assertEquals("Invalid sheet name", "Sheet4", row.getSheetName());
         assertEquals("invalid row changed", 0, row.getRowNumber());
     }
-
+    
     private File getTestFile(String fileName) {
         return new File(RowChangeDiffTest.class.getClassLoader().getResource(fileName).getFile());
     }
-
+    
 }

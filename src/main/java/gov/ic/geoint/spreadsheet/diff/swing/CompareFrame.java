@@ -89,7 +89,7 @@ public class CompareFrame extends javax.swing.JFrame {
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                 .addGroup(layout.createSequentialGroup()
                                     .addComponent(jLabel1)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addGap(18, 18, 18)
                                     .addComponent(baseFileButton))
                                 .addGroup(layout.createSequentialGroup()
                                     .addComponent(jLabel2)
@@ -104,7 +104,7 @@ public class CompareFrame extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(108, 108, 108)
                         .addComponent(jLabel4)))
-                .addContainerGap(60, Short.MAX_VALUE))
+                .addContainerGap(58, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -135,30 +135,34 @@ public class CompareFrame extends javax.swing.JFrame {
             int returnVal = fc.showOpenDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                baseFile = fc.getSelectedFile();
-                if (!baseFile.exists()) {
+                File chosenFile = fc.getSelectedFile();
+                if (!chosenFile.exists()) {
                     JOptionPane.showMessageDialog(this, "File does not exist!");
                 }
-                if (!baseFile.canRead()) {
+                if (!chosenFile.canRead()) {
                     JOptionPane.showMessageDialog(this, "Cannot read file.");
                 }
+                baseFile = chosenFile;
+                baseFileButton.setText(baseFile.getName());
             }
         }
     }//GEN-LAST:event_baseFileButtonActionPerformed
 
     private void newFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newFileButtonActionPerformed
         if (evt.getSource() == newFileButton) {
-            final JFileChooser fc = new JFileChooser();
+            final JFileChooser fc = new JFileChooser((baseFile != null) ? baseFile.getParent() : "");
             int returnVal = fc.showOpenDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                compareFile = fc.getSelectedFile();
-                if (!compareFile.exists()) {
+                File chosenFile = fc.getSelectedFile();
+                if (!chosenFile.exists()) {
                     JOptionPane.showMessageDialog(this, "File does not exist!");
                 }
-                if (!compareFile.canRead()) {
+                if (!chosenFile.canRead()) {
                     JOptionPane.showMessageDialog(this, "Cannot read file.");
                 }
+                compareFile = chosenFile;
+                newFileButton.setText(compareFile.getName());
             }
         }
     }//GEN-LAST:event_newFileButtonActionPerformed
@@ -191,6 +195,7 @@ public class CompareFrame extends javax.swing.JFrame {
         RowChangeDiff diff = new RowChangeDiff(new ExcelWorkbook(baseFile),
                 new ExcelWorkbook(compareFile));
         File tmpFile = new File(System.getProperty("java.io.tmpdir") + "/diff_" + UUID.randomUUID().toString());
+        tmpFile.deleteOnExit();
         DiffListener output = new AppendDiffToWorkbookListener(new ExcelWorkbook(tmpFile));
         diff.addListener(output);
         diff.diff();

@@ -59,6 +59,9 @@ public class RowChangeDiff extends ObservableDiff {
         //wait for exec to complete
         exec.shutdown();
         exec.awaitTermination(1, TimeUnit.DAYS); //todo make this configurable
+        for (DiffListener l : listeners) {
+            l.complete();
+        }
     }
 
     private class SheetRowChangeTask implements Runnable {
@@ -76,25 +79,32 @@ public class RowChangeDiff extends ObservableDiff {
 
             if (logger.isLoggable(Level.FINE)) {
                 logger.log(Level.FINE, "Running sheet row change diff for "
-                        + "sheet {0}", baseSheet.getName());
+                        + "sheet {0}; there are {1} rows",
+                        new Object[]{changeSheet.getName(), changeSheet.numRows()});
             }
 
             Set<byte[]> baseRowHashes = new TreeSet<>(new ByteArrayComparator());
 
             //first get row hashes for all rows in the base sheet
-            for (IRow r : baseSheet) {
-                baseRowHashes.add(r.getHash());
+            if (baseSheet != null) { //may be null if sheet is new
+                System.out.println("basesheet is not null");
+                for (IRow r : baseSheet) {
+                    baseRowHashes.add(r.getHash());
+                }
+            } else {
+                System.out.println("basesheet is null");
             }
 
             //see if there are rows that do not match existing hashes
             for (IRow r : changeSheet) {
+                
+                if (logger.isLoggable(Level.FINEST)) {
+                    logger.log(Level.FINEST, "Found new row ''{0}'' in "
+                            + "sheet ''{1}''",
+                            new Object[]{r.getRowNumber(), changeSheet.getName()});
+                }
+                
                 if (!baseRowHashes.contains(r.getHash())) {
-
-                    if (logger.isLoggable(Level.FINEST)) {
-                        logger.log(Level.FINEST, "Found new row ''{0}'' in "
-                                + "sheet ''{1}''",
-                                new Object[]{r.getRowNumber(), changeSheet.getName()});
-                    }
 
                     for (DiffListener l : listeners) {
                         l.newRow(r);
