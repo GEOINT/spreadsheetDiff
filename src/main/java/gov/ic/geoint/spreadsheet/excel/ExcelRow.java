@@ -52,6 +52,17 @@ public class ExcelRow implements IRow {
         return new ExcelCellIterator(row.iterator());
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("row: sheet \"")
+                .append(row.getSheet().getSheetName())
+                .append("\"; row number \"")
+                .append(row.getRowNum())
+                .append("\"");
+        return sb.toString();
+    }
+
     private static class ExcelCellIterator extends IteratorWrapper<ICell, Cell> {
 
         public ExcelCellIterator(Iterator<Cell> iterator) {

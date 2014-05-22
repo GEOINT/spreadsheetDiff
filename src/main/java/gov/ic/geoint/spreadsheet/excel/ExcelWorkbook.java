@@ -55,7 +55,7 @@ public class ExcelWorkbook implements IWorkbook {
     }
 
     @Override
-    public synchronized void addRow(IRow row) {
+    public void addRow(IRow row) {
 
         Sheet sheet = wb.getSheet(row.getSheetName());
         if (sheet == null) {

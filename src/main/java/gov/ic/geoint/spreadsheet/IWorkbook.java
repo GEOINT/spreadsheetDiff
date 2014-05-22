@@ -30,6 +30,8 @@ public interface IWorkbook extends Hashable, Iterable<ISheet> {
     /**
      * Adds the row to the workbook
      *
+     * This method isn't thread safe
+     *
      * @param row
      */
     void addRow(IRow row);
