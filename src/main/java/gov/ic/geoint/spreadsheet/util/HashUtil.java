@@ -13,7 +13,6 @@ import java.security.NoSuchAlgorithmException;
 public class HashUtil {
 
     private final static String DIGEST_TYPE = "MD5"; //TODO make this configurable
-    private final static byte[] INPUT_SEPARATOR = "//".getBytes();
 
     /**
      * Returns hash bytes or null if the value is blank/null
@@ -22,7 +21,7 @@ public class HashUtil {
      * @return
      */
     public static byte[] hash(ICell c) {
-        String value = c.getValue();
+        String value = c.getValue().trim();
         if (value == null || value.contentEquals("")) {
             return null;
         }
@@ -45,7 +44,6 @@ public class HashUtil {
             if (cellDigest != null) {
                 hasContents = true;
                 md.update(cellDigest);
-                md.update(INPUT_SEPARATOR); //trailing separator...it doesn't matter
             }
         }
         return (hasContents) ? md.digest() : null;
@@ -57,7 +55,6 @@ public class HashUtil {
             byte[] rowHash = r.getHash();
             if (rowHash != null) {
                 md.update(r.getHash());
-                md.update(INPUT_SEPARATOR); //trailing separator...it doesn't matter
             }
         }
         return md.digest();
@@ -67,7 +64,6 @@ public class HashUtil {
         MessageDigest md = getDigest();
         for (ISheet s : w) {
             md.update(s.getHash());
-            md.update(INPUT_SEPARATOR);
         }
         return md.digest();
     }
