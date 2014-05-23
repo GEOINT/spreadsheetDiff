@@ -4,6 +4,7 @@ import gov.ic.geoint.spreadsheet.ICell;
 import gov.ic.geoint.spreadsheet.util.HashUtil;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -19,7 +20,8 @@ import org.apache.poi.ss.usermodel.CellValue;
  */
 public class ExcelCell implements ICell {
 
-    private static final Map<Cell, ExcelCell> cache = new WeakHashMap<>();
+    private static final Map<Cell, ExcelCell> cache
+            = Collections.synchronizedMap(new WeakHashMap<Cell, ExcelCell>());
     private final Cell cell;
     private HSSFFormulaEvaluator evaluator;
     private final static String DATE_FORMAT = "dd MMM yyyy";
@@ -67,10 +69,15 @@ public class ExcelCell implements ICell {
                     DateFormat format = new SimpleDateFormat(DATE_FORMAT);
                     return format.format(date);
                 } else {
-                    return String.valueOf(cell.getNumericCellValue());
+                    final double value = cell.getNumericCellValue();
+                    //if it's a whole number, drop the decimal ".0"
+                    if (Math.rint(value) == value) {
+                        return String.valueOf(value);
+                    }
+                    return String.valueOf((int) value);
                 }
             case CELL_TYPE_FORMULA:
-                CellValue value= getFormulaEvaluator().evaluate(cell);
+                CellValue value = getFormulaEvaluator().evaluate(cell);
                 return value.toString();
             case CELL_TYPE_BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());

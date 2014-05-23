@@ -82,27 +82,49 @@ public class RowChangeDiff extends ObservableDiff {
 
         //submit all spreadsheet compare tasks and synchronously wait for all 
         //to be done
-        List<Future<ISheet>> results = exec.invokeAll(changeTasks);
+        final List<Future<ISheet>> results;
 
-        if (logger.isLoggable(Level.FINE)) {
-            for (Future<ISheet> r : results) {
-                try {
-                    final ISheet sheet = r.get();
-                    logger.log(Level.FINE, "Spreadsheet row change task "
-                            + "complete for sheet {0}", sheet.getName());
-                } catch (ExecutionException | InterruptedException ex) {
-                    logger.log(Level.SEVERE, "Spreadsheet row change task did "
-                            + "not complete successfully", ex);
+        try {
+            results = exec.invokeAll(changeTasks);
+
+//        if (changeTasks.size() > 1) {
+//            results = exec.invokeAll(changeTasks);
+//        } else if (changeTasks.size() == 1) {
+//            results = new ArrayList<>();
+//            Future<ISheet> result = exec.submit(changeTasks.get(0));
+//            while (!result.isDone()); //wait for it to complete
+//            results.add(result);
+//        } else {
+//            results = new ArrayList<>();
+//        }
+            if (logger.isLoggable(Level.FINE)) {
+                for (Future<ISheet> r : results) {
+                    try {
+                        final ISheet sheet = r.get();
+                        logger.log(Level.FINE, "Spreadsheet row change task "
+                                + "complete for sheet {0}", sheet.getName());
+                    } catch (ExecutionException | InterruptedException ex) {
+                        logger.log(Level.SEVERE, "Spreadsheet row change task did "
+                                + "not complete successfully", ex);
+                    }
                 }
             }
-        }
 
-        //tell the processing thread to shut down by passing poison pill
-        rowQueue.add(new PoisonRow());
-        exec.shutdown();
-        exec.awaitTermination(1, TimeUnit.DAYS); //todo make this configurable
-        for (DiffListener l : listeners) {
-            l.complete();
+            //tell the processing thread to shut down by passing poison pill
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.finest("Sending poison pill to shut down processor");
+            }
+            rowQueue.add(new PoisonRow());
+            exec.shutdown();
+            exec.awaitTermination(1, TimeUnit.DAYS); //todo make this configurable
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.finest("Shut down diff executor.");
+            }
+            for (DiffListener l : listeners) {
+                l.complete();
+            }
+        } catch (Throwable ex) {
+            logger.log(Level.SEVERE, "Problem submitting diff tasks", ex);
         }
     }
 
@@ -210,6 +232,9 @@ public class RowChangeDiff extends ObservableDiff {
 
         @Override
         public void run() {
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.finest("Starting row diff change processor");
+            }
             while (true) {
                 try {
                     IRow r = queue.take();
@@ -232,6 +257,9 @@ public class RowChangeDiff extends ObservableDiff {
                 } catch (InterruptedException ex) {
                     Thread.interrupted();
                 }
+            }
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.finest("Shutting down row diff change processor.");
             }
         }
     }

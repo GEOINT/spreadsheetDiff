@@ -181,7 +181,7 @@ public class CompareFrame extends javax.swing.JFrame {
         try {
             File tmpFile = doCompare();
             Desktop.getDesktop().open(tmpFile);
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             JOptionPane.showMessageDialog(this, "Unable to open diff file!");
             logger.log(Level.SEVERE, "Problems comparing file", ex);
         }

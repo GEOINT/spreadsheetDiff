@@ -4,6 +4,7 @@ import gov.ic.geoint.spreadsheet.IRow;
 import gov.ic.geoint.spreadsheet.ISheet;
 import gov.ic.geoint.spreadsheet.util.HashUtil;
 import gov.ic.geoint.spreadsheet.util.IteratorWrapper;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -15,7 +16,8 @@ import org.apache.poi.ss.usermodel.Sheet;
  */
 public class ExcelSheet implements ISheet {
 
-    private static Map<Sheet, ExcelSheet> cache = new WeakHashMap<>();
+    private static final Map<Sheet, ExcelSheet> cache 
+            = Collections.synchronizedMap(new WeakHashMap<Sheet, ExcelSheet>());
     private final Sheet sheet;
 
     private ExcelSheet(Sheet sheet) {
