@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
@@ -48,9 +47,10 @@ public class RowChangeDiff extends ObservableDiff {
         final int maxSheets = Math.max(base.numSheets(), change.numSheets());
 
         //use one thread per sheet, up to twice the number of processors available
+        //but at least two threads (one for processing, one for execution)
         ExecutorService exec = Executors.newFixedThreadPool(
                 Math.min(Runtime.getRuntime().availableProcessors() * 2,
-                        maxSheets));
+                        maxSheets + 1));
 
         if (logger.isLoggable(Level.FINE)) {
             logger.log(Level.FINE, "Initialized row diff thread pool.");
@@ -63,7 +63,6 @@ public class RowChangeDiff extends ObservableDiff {
 
         //process each sheet comparison on a separate thread
         List<SheetRowChangeTask> changeTasks = new ArrayList<>();
-
         //use the sheets from the change workbook to reference those from 
         //the base -- if there are missing sheets in the change sheet, that's 
         //ok...we don't want to display these anyway
@@ -82,21 +81,8 @@ public class RowChangeDiff extends ObservableDiff {
 
         //submit all spreadsheet compare tasks and synchronously wait for all 
         //to be done
-        final List<Future<ISheet>> results;
-
         try {
-            results = exec.invokeAll(changeTasks);
-
-//        if (changeTasks.size() > 1) {
-//            results = exec.invokeAll(changeTasks);
-//        } else if (changeTasks.size() == 1) {
-//            results = new ArrayList<>();
-//            Future<ISheet> result = exec.submit(changeTasks.get(0));
-//            while (!result.isDone()); //wait for it to complete
-//            results.add(result);
-//        } else {
-//            results = new ArrayList<>();
-//        }
+            final List<Future<ISheet>> results = exec.invokeAll(changeTasks);
             if (logger.isLoggable(Level.FINE)) {
                 for (Future<ISheet> r : results) {
                     try {
@@ -136,9 +122,9 @@ public class RowChangeDiff extends ObservableDiff {
 
         private final ISheet baseSheet;
         private final ISheet changeSheet;
-        private final Queue<IRow> queue;
+        private final BlockingQueue<IRow> queue;
 
-        public SheetRowChangeTask(Queue<IRow> queue, ISheet baseSheet,
+        public SheetRowChangeTask(BlockingQueue<IRow> queue, ISheet baseSheet,
                 ISheet changeSheet) {
             this.baseSheet = baseSheet;
             this.changeSheet = changeSheet;
@@ -146,8 +132,7 @@ public class RowChangeDiff extends ObservableDiff {
         }
 
         @Override
-        public ISheet call() {
-
+        public ISheet call() throws Exception {
             if (logger.isLoggable(Level.FINE)) {
                 logger.log(Level.FINE, "Running sheet row change diff for "
                         + "sheet {0}; there are {1} rows",
