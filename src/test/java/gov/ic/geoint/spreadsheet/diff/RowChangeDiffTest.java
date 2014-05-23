@@ -22,6 +22,9 @@ public class RowChangeDiffTest {
     private final static String XLS_NEW_SHEET = "newSheet.xls";
     private final static String XLS_APPEND_MULTI_ROWS = "appendedMultiRows.xls";
     private final static String XLS_MULTI_SHEET_CHANGES = "multiSheetChanges.xls";
+    private final static String XLS_SINGLE_BASE = "singleSheetBase.xls";
+    private final static String XLS_SINGLE_APPEND = "singleSheetAppendRow.xls";
+    
 
     @BeforeClass
     public static void before() {
@@ -128,6 +131,19 @@ public class RowChangeDiffTest {
 
         assertEquals("invalid number of changed rows", 3, l.getRows().size());
 
+    }
+    
+    @Test
+    public void testSingleSheetAppend() throws Exception {
+        RowChangeDiff diff = new RowChangeDiff(
+                new ExcelWorkbook(getTestFile(XLS_SINGLE_BASE)),
+                new ExcelWorkbook(getTestFile(XLS_SINGLE_APPEND)));
+
+        RowDiffMemoryStoreListener l = new RowDiffMemoryStoreListener();
+        diff.addListener(l);
+        diff.diff();
+
+        assertEquals("invalid number of changed rows", 1, l.getRows().size());
     }
 
     private File getTestFile(String fileName) {
