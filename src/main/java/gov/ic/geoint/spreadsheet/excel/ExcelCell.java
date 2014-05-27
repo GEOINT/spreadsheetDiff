@@ -61,7 +61,7 @@ public class ExcelCell implements ICell {
             case CELL_TYPE_BLANK:
                 return "";
             case CELL_TYPE_STRING:
-                return cell.getStringCellValue();
+                return cell.getStringCellValue().trim();
             case CELL_TYPE_NUMERIC:
                 if (HSSFDateUtil.isCellDateFormatted(cell)) {
                     Date date
@@ -72,13 +72,13 @@ public class ExcelCell implements ICell {
                     final double value = cell.getNumericCellValue();
                     //if it's a whole number, drop the decimal ".0"
                     if (Math.rint(value) == value) {
-                        return String.valueOf(value);
+                        return String.valueOf((int) value);
                     }
-                    return String.valueOf((int) value);
+                    return String.valueOf(value);
                 }
             case CELL_TYPE_FORMULA:
                 CellValue value = getFormulaEvaluator().evaluate(cell);
-                return value.toString();
+                return value.toString().trim();
             case CELL_TYPE_BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
             case CELL_TYPE_ERROR:

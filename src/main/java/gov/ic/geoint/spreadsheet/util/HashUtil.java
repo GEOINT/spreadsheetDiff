@@ -21,7 +21,7 @@ public class HashUtil {
      * @return
      */
     public static byte[] hash(ICell c) {
-        String value = c.getValue().trim();
+        String value = c.getValue();
         if (value == null || value.contentEquals("")) {
             return null;
         }

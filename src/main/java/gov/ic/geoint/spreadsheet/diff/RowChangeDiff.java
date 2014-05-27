@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -140,7 +140,7 @@ public class RowChangeDiff extends ObservableDiff {
             }
 
             try {
-                Set<byte[]> baseRowHashes = new TreeSet<>(new ByteArrayComparator());
+                Map<byte[], IRow> baseRowHashes = new TreeMap<>(new ByteArrayComparator());
 
                 //first get row hashes for all rows in the base sheet
                 if (baseSheet != null) { //may be null if sheet is new
@@ -151,18 +151,7 @@ public class RowChangeDiff extends ObservableDiff {
                     for (IRow r : baseSheet) {
                         final byte[] rowHash = r.getHash();
                         if (rowHash != null) {
-                            if (logger.isLoggable(Level.FINEST)) {
-                                logger.log(Level.FINEST, "Hash for row {0}:{1} is {2}",
-                                        new Object[]{baseSheet.getName(),
-                                            r.getRowNumber(), new String(rowHash)});
-                            }
-                            baseRowHashes.add(rowHash);
-                        } else {
-                            if (logger.isLoggable(Level.FINEST)) {
-                                logger.log(Level.FINEST, "No hash for row {0}:{1}",
-                                        new Object[]{baseSheet.getName(),
-                                            r.getRowNumber()});
-                            }
+                            baseRowHashes.put(rowHash, r);
                         }
                     }
                 } else {
@@ -175,7 +164,7 @@ public class RowChangeDiff extends ObservableDiff {
                 //see if there are rows that do not match existing hashes
                 for (IRow r : changeSheet) {
                     final byte[] rowHash = r.getHash();
-                    if (rowHash != null && !baseRowHashes.contains(rowHash)) {
+                    if (rowHash != null && !baseRowHashes.containsKey(rowHash)) {
 
                         if (logger.isLoggable(Level.FINEST)) {
                             logger.log(Level.FINEST, "Found new row ''{0}'' in "
